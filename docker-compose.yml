@@ -1,0 +1,66 @@
+services:
+  db:
+    image: "postgres:17-alpine"
+    restart: always
+    environment:
+      POSTGRES_DB: "${DB_NAME:-gauzy}"
+      POSTGRES_USER: "${DB_USER:-postgres}"
+      POSTGRES_PASSWORD: "${DB_PASS}"
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - "gauzy-postgres-data:/var/lib/postgresql/data/"
+      - "./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh:ro"
+
+  api:
+    image: "ghcr.io/ever-co/gauzy-api:latest"
+    restart: on-failure
+    environment:
+      NODE_ENV: production
+      IS_DOCKER: "true"
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: "${DB_NAME:-gauzy}"
+      DB_USER: "${DB_USER:-postgres}"
+      DB_PASS: "${DB_PASS}"
+      API_HOST: api
+      API_PORT: "3000"
+      API_BASE_URL: "${API_BASE_URL}"
+      CLIENT_BASE_URL: "${CLIENT_BASE_URL}"
+      DEMO: "${DEMO:-true}"
+      TRUST_PROXY: "${TRUST_PROXY:-1}"
+      JWT_SECRET: "${JWT_SECRET}"
+      JWT_REFRESH_TOKEN_SECRET: "${JWT_REFRESH_TOKEN_SECRET}"
+      JWT_VERIFICATION_TOKEN_SECRET: "${JWT_VERIFICATION_TOKEN_SECRET}"
+      EXPRESS_SESSION_SECRET: "${EXPRESS_SESSION_SECRET}"
+    entrypoint: './entrypoint.compose.sh'
+    command: ['node', 'main.js']
+    depends_on:
+      db:
+        condition: service_healthy
+
+  webapp:
+    image: "ghcr.io/ever-co/gauzy-webapp:latest"
+    restart: on-failure
+    environment:
+      NODE_ENV: production
+      IS_DOCKER: "true"
+      API_HOST: api
+      API_PORT: "3000"
+      API_BASE_URL: "${API_BASE_URL}"
+      CLIENT_BASE_URL: "${CLIENT_BASE_URL}"
+      DEMO: "${DEMO:-true}"
+    entrypoint: './entrypoint.compose.sh'
+    command: ['nginx', '-g', 'daemon off;']
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  gauzy-postgres-data: {}
