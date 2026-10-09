@@ -54,10 +54,7 @@ services:
       API_BASE_URL: "${API_BASE_URL}"
       CLIENT_BASE_URL: "${CLIENT_BASE_URL}"
       DEMO: "${DEMO:-true}"
-    entrypoint: './entrypoint.compose.sh'
-    command: ['nginx', '-g', 'daemon off;']
-    volumes:
-      - "./nginx.compose.conf:/etc/nginx/conf.d/compose.conf.template:ro"
+    entrypoint: ['sh', '-c', 'sed -i "s/listen 4200;/listen 80;/" /etc/nginx/conf.d/compose.conf.template && exec ./entrypoint.compose.sh nginx -g "daemon off;"']
     depends_on:
       db:
         condition: service_healthy
