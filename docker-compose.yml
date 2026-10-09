@@ -10,10 +10,10 @@ services:
       test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || exit 1']
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 60s
     volumes:
       - "gauzy-postgres-data:/var/lib/postgresql/data/"
-      - "./init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh:ro"
 
   api:
     image: "ghcr.io/ever-co/gauzy-api:latest"
