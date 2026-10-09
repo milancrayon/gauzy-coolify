@@ -13,7 +13,7 @@ services:
       retries: 10
       start_period: 60s
     volumes:
-      - "gauzy-postgres-data:/var/lib/postgresql/data/"
+      - "gauzy-pgdata-v2:/var/lib/postgresql/data/"
 
   api:
     image: "ghcr.io/ever-co/gauzy-api:latest"
@@ -63,4 +63,4 @@ services:
         condition: service_started
 
 volumes:
-  gauzy-postgres-data: {}
+  gauzy-pgdata-v2: {}
